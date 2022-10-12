@@ -1,4 +1,4 @@
-export function App() {
+export function Home() {
   return (
     
     <div className="h-screen bg-red-700 text-white p-4 flex flex-col items-center space-y-6">
@@ -17,13 +17,13 @@ export function App() {
           
           <h1 className="text-3xl text-center md:text-left font-bold">Dê o seu palpite na Copa do Mundo do Catar 2022!</h1>
           
-          <button className="text-red-700 bg-white text-xl px-8 py-4 rounded-xl">
+          <a href="/signup" className="text-center text-red-700 bg-white text-xl px-8 py-4 rounded-xl">
             Criar minha conta
-          </button>
+          </a>
           
-          <button className="text-white border border-white text-xl px-8 py-4 rounded-xl">
+          <a href="/login" className="text-center text-white border border-white text-xl px-8 py-4 rounded-xl">
             Fazer login
-          </button>
+          </a>
         </div>
       </div>
     </div>
