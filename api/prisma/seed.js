@@ -247,10 +247,32 @@ const games = [
       }
 ]
 
+/* 
+
+o codigo comentado pode ser reduzido ao codigo a seguir
+
 async function main() {
-    await prisma.game.createMany({
+
+    const data = await prisma.game.createMany({
         data: games
     })
+
+    return data
 }
 
+main().then((data) => {
+  console.log(data)
+}).catch((error) => {
+  console.log(error)
+}) 
+
+*/
+
+const main = () =>
+  prisma.game.createMany({
+    data: games
+  })
+
 main()
+  .then(console.log)
+  .catch(console.log)
