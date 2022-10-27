@@ -4,17 +4,33 @@ import * as yup from 'yup'
 
 import { Icon, Input } from '~/components'
 
+const validationSchema = yup.object().shape({
+    name: yup.string().required('Preencha seu nome'),
+    username: yup.string().required('Preencha seu nome de usuário'),
+    email: yup.string().email('Informe um e-mail válido').required('Informe seu e-mail'),
+    password: yup.string().required('Digite uma senha')
+})
+
 export const Signup = () => {
     const formik = useFormik({
-        onSubmit: (values) => {
-            console.log(values)
+        onSubmit: async (values) => {
+            
+            const res = await axios({
+                method: 'post',
+                baseURL: 'http://localhost:3000',
+                url: '/users',
+                data: values
+            })
+
+            console.log(res.data) 
         },
         initialValues: {
             name: '',
             username: '',
             email: '',
             password: ''
-        }
+        },
+        validationSchema
     })
 
     return (
@@ -37,6 +53,7 @@ export const Signup = () => {
                         name="name"
                         label="Seu nome"
                         placeholder="Digite seu nome"
+                        error={formik.touched.name && formik.errors.name}
                         value={formik.values.name}
                         onChange={formik.handleChange} 
                         onBlur={formik.handleBlur}
@@ -46,6 +63,7 @@ export const Signup = () => {
                         name="username"
                         label="Seu nome de usuário"
                         placeholder="Digite um nome de usuário" 
+                        error={formik.touched.username && formik.errors.username}
                         value={formik.values.username}
                         onChange={formik.handleChange} 
                         onBlur={formik.handleBlur}
@@ -55,6 +73,7 @@ export const Signup = () => {
                         name="email"
                         label="Seu e-mail"
                         placeholder="Digite seu e-mail" 
+                        error={formik.touched.email && formik.errors.email}
                         value={formik.values.email}
                         onChange={formik.handleChange} 
                         onBlur={formik.handleBlur}
@@ -64,12 +83,17 @@ export const Signup = () => {
                         name="password"
                         label="Sua senha"
                         placeholder="Digite sua senha" 
+                        error={formik.touched.password && formik.errors.password}
                         value={formik.values.password}
                         onChange={formik.handleChange} 
                         onBlur={formik.handleBlur}
                     />
 
-                    <button type='submit' className="block w-full text-center text-white bg-red-500 px-6 py-3 rounded-xl">
+                    <button
+                        type='submit' 
+                        className="block w-full text-center text-white bg-red-500 px-6 py-3 rounded-xl disabled:opacity-50" 
+                        disabled={!formik.isValid}
+                    >
                         Criar minha conta
                      </button>
                 </form>
