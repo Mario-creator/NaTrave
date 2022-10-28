@@ -1,11 +1,11 @@
-export const Card = ({ timeA, timeB, match }) => (
+export const Card = ({ homeTeam, awayTeam, match }) => (
 <div className='rounded-xl border border-gray-300 p-4 text-center space-y-4'>
-    <span className='text-sm md:text-base text-gray-700 font-bold'>{matchMedia.time}</span>
+    <span className='text-sm md:text-base text-gray-700 font-bold'>{match.time}</span>
 
     <div className='flex space-x-4 justify-center items-center'>
 
-        <span className='uppercase'>{timeA.slug}</span>
-        <img src={`img/flags/${timeA.slug}.png`} />
+        <span className='uppercase'>{homeTeam.slug}</span>
+        <img src={`img/flags/${homeTeam.slug}.png`} />
 
         <input type="number" className='bg-red-300/[0.2] w-[55px] h-[55px] text-red-700 text-xl text-center' />
 
@@ -13,8 +13,8 @@ export const Card = ({ timeA, timeB, match }) => (
 
         <input type="number" className='bg-red-300/[0.2] w-[55px] h-[55px] text-red-700 text-xl text-center' />
 
-        <img src={`img/flags/${timeB.slug}.png`} />
-        <span className='uppercase'>{timeB.slug}</span>
+        <img src={`img/flags/${awayTeam.slug}.png`} />
+        <span className='uppercase'>{awayTeam.slug}</span>
 
     </div>
 </div>                
