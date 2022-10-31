@@ -1,25 +1,78 @@
-import { useLocalStorage } from 'react-use'
-import { Navigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useLocalStorage, useAsync, useAsyncFn } from 'react-use'
+import axios from 'axios'
+import { format, formatISO } from 'date-fns'
 
 import { Icon, Card, DateSelect } from '~/components'
+import { useEffect, useState } from 'react'
 
 export const Profile = () => {
+    const params = useParams()
+    const navigate = useNavigate()
+
+
+    const [currentDate, setDate] = useState(formatISO(new Date(2022, 10, 20)))
     const [auth, setAuth] = useLocalStorage('auth', {})
 
-    const logout = () => setAuth({})
+    const [{ value: hunches, user, loading, error }, fetchHunches] = useAsyncFn(async () => {
+        const res = await axios({
+            method: 'get',
+            baseURL: 'http://localhost:3000',
+            url: `/${params.username}`
+        })   
+        
+        const hunches = res.data.hunches.reduce((acc, hunch) => {
+            acc[hunch.gameId] = {
+                homeTeamScore: hunch.homeTeamScore.toString(),
+                awayTeamScore: hunch.awayTeamScore.toString()
+            }
+            return acc
+        }, {})
 
-    if (!auth?.user?.id) {
-        return <Navigate to="/" replace={true} />
-      }
+        return {
+            ...res.data,
+            hunches
+        }
+    })
+
+    const [games, fetchGames] = useAsyncFn(async (params) => {
+        const res = await axios({
+            method: 'get',
+            baseURL: 'http://localhost:3000',
+            url: '/games',
+            params
+        })
+
+        return res.data
+    })
+
+    const logout = () => {
+        setAuth({})
+        navigate('/login')
+    }
+
+    const isLoading = games.loading || loading
+    const hasError = games.error || error
+    const isDone = !isLoading && !hasError
+
+    useEffect(() => {
+        fetchHunches()
+    }, [])
+
+    useEffect(() => {
+        fetchGames({ gameTime: currentDate })
+    }, [currentDate])
 
     return (
         <>
             <header className="bg-red-500 text-white p-4">
                 <div className="container max-w-3xl flex justify-between text-white">
                     <img src="/img/logo-fundo-vermelho.svg" className="w-28 md:w-40"/>
-                    <div onClick={logout} className="p-2 cursor-pointer">
-                        Sair
-                    </div>
+                    {auth?.user?.id && (
+                       <div onClick={logout} className="p-2 cursor-pointer">
+                       Sair
+                   </div> 
+                    )}
                 </div>
             </header>
             <main className='space-y-6' >
@@ -28,39 +81,31 @@ export const Profile = () => {
                         <a href="/dashboard">
                             <Icon name="back" className="w-10"/>
                         </a>
-                        
-                        <h3 className='text-2xl font-bold'>Bruno Bertolini</h3>
+                        <h3 className='text-2xl font-bold'>{ user?.name }</h3>
                     </div>
                 </section>
                 <section id='content' className='p-4 container max-w-3xl space-y-4'>
                     <h2 className='text-red-500 text-xl font-bold' >Seus palpites</h2>
 
-                    <DateSelect/>
+                    <DateSelect currentDate={currentDate} onChange={setDate} />
 
                     <div className='space-y-4'>
-                        <Card 
-                            timeA={{ slug: 'sui'}}
-                            timeB={{ slug: 'cam'}}
-                            match={{ time: '7:00'}}
-                        />
+                        {isLoading && 'Carregando jogos...'}
+                        {hasError && 'Ops! Algo deu errado...'}
 
-                        <Card 
-                            timeA={{ slug: 'uru'}}
-                            timeB={{ slug: 'cor'}}
-                            match={{ time: '7:00'}}
-                        />
+                        {isDone && games.value?.map(game => (
+                            <Card 
+                                key={game.id}
+                                gameId={game.id}
+                                homeTeam={game.homeTeam}
+                                awayTeam={game.awayTeam}
+                                gameTime={format(new Date(game.gameTime), 'H:mm')}
+                                homeTeamScore={hunches?.value?.[game.id]?.homeTeamScore || ''}
+                                awayTeamScore={hunches?.value?.[game.id]?.awayTeamScore || ''}
+                                disabled={true}
+                            />
+                        ))}
 
-                        <Card 
-                            timeA={{ slug: 'por'}}
-                            timeB={{ slug: 'gan'}}
-                            match={{ time: '7:00'}}
-                        />
-
-                        <Card 
-                            timeA={{ slug: 'bra'}}
-                            timeB={{ slug: 'ser'}}
-                            match={{ time: '7:00'}}
-                        />
                     </div>
                     
                 </section>

@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useLocalStorage, useAsync, useAsyncFn } from 'react-use'
 import axios from 'axios'
 import { format, formatISO } from 'date-fns'
@@ -7,10 +7,32 @@ import { Icon, Card, DateSelect } from '~/components'
 import { useEffect, useState } from 'react'
 
 export const Dashboard = () => {
+    const params = useParams()
+    const navigate = useNavigate()
+
     const [currentDate, setDate] = useState(formatISO(new Date(2022, 10, 20)))
     const [auth] = useLocalStorage('auth', {})
 
-    const [state, doFetch] = useAsyncFn(async (params) => {
+    const [{ value: hunches, loading, error }, fetchHunches] = useAsyncFn(async () => {
+        const res = await axios({
+            method: 'get',
+            baseURL: 'http://localhost:3000',
+            url: `/${params.username}`
+        })   
+        
+        const hunches = res.data.hunches.reduce((acc, hunch) => {
+            acc[hunch.gameId] = hunch
+            return acc
+        }, {})
+
+        return {
+            ...res.data,
+            hunches
+        }
+    })
+
+
+    const [games, fetchGames] = useAsyncFn(async (params) => {
         const res = await axios({
             method: 'get',
             baseURL: 'http://localhost:3000',
@@ -21,8 +43,16 @@ export const Dashboard = () => {
         return res.data
     })
 
+    const isLoading = games.loading || loading
+    const hasError = games.error || error
+    const isDone = !isLoading && !hasError
+
     useEffect(() => {
-        doFetch({ gameTime: currentDate })
+        fetchHunches()
+    }, [])
+
+    useEffect(() => {
+        fetchGames({ gameTime: currentDate })
     }, [currentDate])
 
     if (!auth?.user?.id) {
@@ -34,7 +64,7 @@ export const Dashboard = () => {
             <header className="bg-red-500 text-white p-4">
                 <div className="container max-w-3xl flex justify-between text-white">
                     <img src="/img/logo-fundo-vermelho.svg" className="w-28 md:w-40"/>
-                    <a href="/profile">
+                    <a href={`/${auth?.user?.username}`}>
                         <Icon name="profile" className="w-10"/>
                     </a>
                 </div>
@@ -51,14 +81,18 @@ export const Dashboard = () => {
                     <DateSelect currentDate={currentDate} onChange={setDate} />
 
                     <div className='space-y-4'>
-                        {state.loading && 'Carregando jogos...'}
-                        {state.error && 'Ops! Algo deu errado...'}
+                        {isLoading && 'Carregando jogos...'}
+                        {hasError && 'Ops! Algo deu errado...'}
 
-                        {!state.loading && !state.error && state.value?.map(game => (
+                        {isDone && games.value?.map(game => (
                             <Card 
-                                homeTeam={{ slug: game.homeTeam }}
-                                awayTeam={{ slug: game.awayTeam }}
-                                match={{ time: format(new Date(game.gameTime), 'H:mm') }}
+                                key={game.id}
+                                gameId={game.id}
+                                homeTeam={game.homeTeam}
+                                awayTeam={game.awayTeam}
+                                gameTime={format(new Date(game.gameTime), 'H:mm')}
+                                homeTeamScore={hunches?.value?.[game.id]?.homeTeamScore || ''}
+                                awayTeamScore={hunches?.value?.[game.id]?.awayTeamScore || ''}
                             />
                         ))}
 
