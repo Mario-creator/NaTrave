@@ -14,18 +14,15 @@ export const Profile = () => {
     const [currentDate, setDate] = useState(formatISO(new Date(2022, 10, 20)))
     const [auth, setAuth] = useLocalStorage('auth', {})
 
-    const [{ value: hunches, user, loading, error }, fetchHunches] = useAsyncFn(async () => {
+    const [{ value: user, loading, error }, fetchHunches] = useAsyncFn(async () => {
         const res = await axios({
             method: 'get',
-            baseURL: 'http://localhost:3000',
+            baseURL: import.meta.env.VITE_API_URL,
             url: `/${params.username}`
         })   
         
         const hunches = res.data.hunches.reduce((acc, hunch) => {
-            acc[hunch.gameId] = {
-                homeTeamScore: hunch.homeTeamScore.toString(),
-                awayTeamScore: hunch.awayTeamScore.toString()
-            }
+            acc[hunch.gameId] = hunch
             return acc
         }, {})
 
@@ -38,7 +35,7 @@ export const Profile = () => {
     const [games, fetchGames] = useAsyncFn(async (params) => {
         const res = await axios({
             method: 'get',
-            baseURL: 'http://localhost:3000',
+            baseURL: import.meta.env.VITE_API_URL,
             url: '/games',
             params
         })
@@ -100,8 +97,8 @@ export const Profile = () => {
                                 homeTeam={game.homeTeam}
                                 awayTeam={game.awayTeam}
                                 gameTime={format(new Date(game.gameTime), 'H:mm')}
-                                homeTeamScore={hunches?.value?.[game.id]?.homeTeamScore || ''}
-                                awayTeamScore={hunches?.value?.[game.id]?.awayTeamScore || ''}
+                                homeTeamScore={user?.hunches?.[game.id]?.homeTeamScore.toString() || ''}
+                                awayTeamScore={user?.hunches?.[game.id]?.awayTeamScore.toString() || ''}
                                 disabled={true}
                             />
                         ))}
